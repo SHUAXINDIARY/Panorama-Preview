@@ -401,8 +401,3 @@ function openImagePreview({ url, filename }) {
 8. 如果裁切结果与预览方向左右相反，可以在 Three.js 裁切函数中把 `camera.rotation.y = yaw` 改为 `camera.rotation.y = -yaw` 做坐标系校准。
 9. 点击裁切结果缩略图只负责放大预览，下载仍通过结果卡片底部的下载链接完成。
 
-## 当前文件
-
-- Demo 页面：`panorama-crop-demo.html`
-- Demo 脚本：`panorama-crop-demo.js`
-- 方案文档：`panorama-view-crop-plan.md`
