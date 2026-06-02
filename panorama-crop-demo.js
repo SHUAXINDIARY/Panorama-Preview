@@ -38,6 +38,17 @@ const VIEW_PRESETS = {
       { name: 'left', yaw: -90, pitch: 0 },
     ],
   },
+  six: {
+    description: '6 视角采用立方体主方向：front/right/back/left/top/bottom。',
+    views: [
+      { name: 'front', yaw: 0, pitch: 0 },
+      { name: 'right', yaw: 90, pitch: 0 },
+      { name: 'back', yaw: 180, pitch: 0 },
+      { name: 'left', yaw: -90, pitch: 0 },
+      { name: 'top', yaw: 0, pitch: 90 },
+      { name: 'bottom', yaw: 0, pitch: -90 },
+    ],
+  },
   nine: {
     description: '9 视角采用三行三列视角矩阵：yaw=-90/0/90deg，pitch=45/0/-45deg。',
     views: [
