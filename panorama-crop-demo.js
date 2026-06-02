@@ -18,6 +18,9 @@ const els = {
   capturePreset: document.querySelector('#capturePreset'),
   clearResults: document.querySelector('#clearResults'),
   results: document.querySelector('#results'),
+  imagePreview: document.querySelector('#imagePreview'),
+  previewImage: document.querySelector('#previewImage'),
+  previewClose: document.querySelector('#previewClose'),
 }
 
 let viewer = null
@@ -122,6 +125,18 @@ function clearEmptyState() {
   if (empty) empty.remove()
 }
 
+function openImagePreview({ url, filename }) {
+  els.previewImage.src = url
+  els.previewImage.alt = filename
+  els.imagePreview.showModal()
+}
+
+function closeImagePreview() {
+  els.imagePreview.close()
+  els.previewImage.removeAttribute('src')
+  els.previewImage.alt = ''
+}
+
 function addResult({ name, blob }) {
   clearEmptyState()
 
@@ -137,6 +152,10 @@ function addResult({ name, blob }) {
       <a href="${url}" download="${filename}">下载</a>
     </footer>
   `
+
+  card.querySelector('img').addEventListener('click', () => {
+    openImagePreview({ url, filename })
+  })
 
   els.results.prepend(card)
 }
@@ -252,6 +271,12 @@ els.capturePreset.addEventListener('click', capturePresets)
 els.clearResults.addEventListener('click', () => {
   resultCount = 0
   els.results.innerHTML = '<div class="empty">裁切结果已清空。</div>'
+})
+els.previewClose.addEventListener('click', closeImagePreview)
+els.imagePreview.addEventListener('click', (event) => {
+  if (event.target === els.imagePreview) {
+    closeImagePreview()
+  }
 })
 
 updateLabels()

@@ -205,6 +205,7 @@
       aspect-ratio: 3 / 2;
       object-fit: cover;
       background: #e2e8f0;
+      cursor: zoom-in;
     }
 
     .result footer {
@@ -225,6 +226,44 @@
     .empty {
       color: #64748b;
       font-size: 13px;
+    }
+
+    .image-preview {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .image-preview::backdrop {
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .image-preview[open] {
+      display: grid;
+      place-items: center;
+    }
+
+    .image-preview img {
+      max-width: calc(100vw - 48px);
+      max-height: calc(100vh - 48px);
+      object-fit: contain;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .preview-close {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1;
+      min-height: 36px;
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #fff;
+      background: rgba(15, 23, 42, 0.72);
     }
 
     @media (max-width: 900px) {
@@ -314,6 +353,11 @@
       </section>
     </aside>
   </div>
+
+  <dialog id="imagePreview" class="image-preview" aria-label="裁切结果大图预览">
+    <button id="previewClose" class="preview-close" type="button">关闭</button>
+    <img id="previewImage" alt="">
+  </dialog>
 
   <script type="importmap">
     {
