@@ -319,7 +319,7 @@ async function loadPanorama(file) {
     navbar: ['zoom', 'move', 'fullscreen'],
     defaultYaw: 0,
     defaultPitch: 0,
-    defaultZoomLvl: 30,
+    defaultZoomLvl: 0,
   })
 
   viewer.addEventListener('position-updated', syncControlsFromPreview)

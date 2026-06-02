@@ -55,17 +55,39 @@
       font-weight: 700;
     }
 
+    .topbar-actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
     .upload {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       color: #0f766e;
-      font-weight: 650;
       cursor: pointer;
+    }
+
+    .upload,
+    .repo-link {
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.4;
     }
 
     .upload input {
       display: none;
+    }
+
+    .repo-link {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .repo-link:hover {
+      text-decoration: underline;
     }
 
     #viewer {
@@ -286,10 +308,13 @@
     <main class="main">
       <header class="topbar">
         <h1>全景图多视角裁切 Demo</h1>
-        <label class="upload">
-          <span>上传全景图</span>
-          <input id="fileInput" type="file" accept="image/*">
-        </label>
+        <div class="topbar-actions">
+          <label class="upload">
+            <span>上传全景图</span>
+            <input id="fileInput" type="file" accept="image/*">
+          </label>
+          <a class="repo-link" href="https://github.com/SHUAXINDIARY/Panorama-Preview" target="_blank" rel="noopener noreferrer">仓库链接</a>
+        </div>
       </header>
 
       <section id="viewer"></section>
