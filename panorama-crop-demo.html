@@ -320,21 +320,12 @@
           <input id="fov" type="range" min="30" max="120" step="1" value="80">
           <span id="fovValue" class="value">80 deg</span>
         </div>
-        <p class="hint">拖动预览区域会同步 yaw / pitch；也可以直接拖动滑块定位。</p>
+        <p class="hint">拖动预览区域会同步 yaw / pitch；也可以直接拖动滑块定位。预览会按当前屏幕像素比提高清晰度。</p>
       </section>
 
       <section class="panel">
-        <h2>输出尺寸</h2>
-        <div class="field">
-          <label for="width">宽度</label>
-          <input id="width" type="number" min="64" max="4096" step="1" value="1200">
-          <span class="value">px</span>
-        </div>
-        <div class="field">
-          <label for="height">高度</label>
-          <input id="height" type="number" min="64" max="4096" step="1" value="800">
-          <span class="value">px</span>
-        </div>
+        <h2>导出设置</h2>
+        <p id="outputSizeInfo" class="hint"></p>
         <label class="select-field" for="presetMode">
           <span>批量视角</span>
           <select id="presetMode">
@@ -345,6 +336,7 @@
           </select>
         </label>
         <p id="presetDescription" class="hint"></p>
+        <p class="hint">输出视角图会按原图分辨率和当前 FOV 计算裁切尺寸，并在显卡允许范围内使用 2x 超采样渲染，减少模糊和锯齿。</p>
         <div class="actions">
           <button id="captureCurrent" disabled>导出当前视角</button>
           <button id="capturePreset" class="secondary" disabled>批量导出选中视角</button>

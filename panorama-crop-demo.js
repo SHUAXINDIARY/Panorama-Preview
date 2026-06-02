@@ -10,8 +10,7 @@ const els = {
   yawValue: document.querySelector('#yawValue'),
   pitchValue: document.querySelector('#pitchValue'),
   fovValue: document.querySelector('#fovValue'),
-  width: document.querySelector('#width'),
-  height: document.querySelector('#height'),
+  outputSizeInfo: document.querySelector('#outputSizeInfo'),
   presetMode: document.querySelector('#presetMode'),
   presetDescription: document.querySelector('#presetDescription'),
   captureCurrent: document.querySelector('#captureCurrent'),
@@ -26,10 +25,17 @@ const els = {
 let viewer = null
 let imageUrl = ''
 let resultCount = 0
+let sourceImageSize = { width: 1200, height: 800 }
+
+const PREVIEW_SUPERSAMPLE_SCALE = 2
+const EXPORT_SUPERSAMPLE_SCALE = 2
+const OUTPUT_ASPECT_RATIO = 3 / 2
+const JPEG_QUALITY = 0.95
 
 const degToRad = (value) => THREE.MathUtils.degToRad(Number(value))
 const radToDeg = (value) => Math.round(THREE.MathUtils.radToDeg(value))
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const getPreviewPixelRatio = () => Math.min((window.devicePixelRatio || 1) * PREVIEW_SUPERSAMPLE_SCALE, 4)
 
 const VIEW_PRESETS = {
   four: {
@@ -90,9 +96,23 @@ function updatePresetDescription() {
   els.presetDescription.textContent = preset.description
 }
 
+function updateOutputSizeInfo() {
+  const { width, height, scale } = getOutputSize()
+  els.outputSizeInfo.textContent = `导出尺寸：${width} x ${height}px（按原图像素密度和当前 FOV 计算，渲染超采样 ${scale}x）`
+}
+
 function setButtonsEnabled(enabled) {
   els.captureCurrent.disabled = !enabled
   els.capturePreset.disabled = !enabled
+}
+
+function tunePreviewResolution() {
+  const renderer = viewer?.renderer?.renderer
+  if (!renderer?.setPixelRatio || !renderer?.setSize) return
+
+  renderer.setPixelRatio(getPreviewPixelRatio())
+  renderer.setSize(els.viewer.clientWidth, els.viewer.clientHeight, false)
+  viewer.needsUpdate?.()
 }
 
 function syncPreviewFromControls() {
@@ -114,9 +134,36 @@ function syncControlsFromPreview() {
 }
 
 function getOutputSize() {
+  const sourceWidth = Math.max(sourceImageSize.width, 64)
+  const sourceHeight = Math.max(sourceImageSize.height, 64)
+  const fov = clamp(Number(els.fov.value) || 80, 1, 180)
+  const height = Math.round(sourceHeight * (fov / 180))
+  const width = Math.min(sourceWidth, Math.round(height * OUTPUT_ASPECT_RATIO))
+
   return {
-    width: clamp(Number(els.width.value) || 1200, 64, 4096),
-    height: clamp(Number(els.height.value) || 800, 64, 4096),
+    width: Math.max(width, 64),
+    height: Math.max(height, 64),
+    scale: EXPORT_SUPERSAMPLE_SCALE,
+  }
+}
+
+function getSupersampledSize({ width, height, maxSize }) {
+  const scale = Math.min(EXPORT_SUPERSAMPLE_SCALE, maxSize / width, maxSize / height)
+
+  return {
+    width: Math.max(1, Math.floor(width * scale)),
+    height: Math.max(1, Math.floor(height * scale)),
+  }
+}
+
+async function readImageSize(url) {
+  const image = new Image()
+  image.src = url
+  await image.decode()
+
+  return {
+    width: image.naturalWidth,
+    height: image.naturalHeight,
   }
 }
 
@@ -166,14 +213,22 @@ async function cropPanorama({ name, yaw, pitch, fov, width, height }) {
     preserveDrawingBuffer: true,
   })
 
+  const gl = renderer.getContext()
+  const renderSize = getSupersampledSize({
+    width,
+    height,
+    maxSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+  })
+
   renderer.setPixelRatio(1)
-  renderer.setSize(width, height, false)
+  renderer.setSize(renderSize.width, renderSize.height, false)
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
   const loader = new THREE.TextureLoader()
   const texture = await loader.loadAsync(imageUrl)
   texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
 
   const geometry = new THREE.SphereGeometry(500, 96, 48)
   geometry.scale(-1, 1, 1)
@@ -188,14 +243,34 @@ async function cropPanorama({ name, yaw, pitch, fov, width, height }) {
 
   renderer.render(scene, camera)
 
-  const blob = await new Promise((resolve) => {
-    renderer.domElement.toBlob(resolve, 'image/jpeg', 0.92)
-  })
+  const outputCanvas = document.createElement('canvas')
+  outputCanvas.width = width
+  outputCanvas.height = height
+
+  const outputContext = outputCanvas.getContext('2d')
+  let blob = null
+
+  if (outputContext) {
+    outputContext.imageSmoothingEnabled = true
+    outputContext.imageSmoothingQuality = 'high'
+    outputContext.drawImage(renderer.domElement, 0, 0, width, height)
+    blob = await new Promise((resolve) => {
+      outputCanvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
+    })
+  } else {
+    blob = await new Promise((resolve) => {
+      renderer.domElement.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
+    })
+  }
 
   geometry.dispose()
   material.dispose()
   texture.dispose()
   renderer.dispose()
+
+  if (!blob) {
+    throw new Error('导出图片失败')
+  }
 
   addResult({ name, blob })
 }
@@ -231,6 +306,8 @@ async function capturePresets() {
 async function loadPanorama(file) {
   if (imageUrl) URL.revokeObjectURL(imageUrl)
   imageUrl = URL.createObjectURL(file)
+  sourceImageSize = await readImageSize(imageUrl)
+  updateOutputSizeInfo()
 
   if (viewer) {
     viewer.destroy()
@@ -247,6 +324,7 @@ async function loadPanorama(file) {
 
   viewer.addEventListener('position-updated', syncControlsFromPreview)
   viewer.addEventListener('ready', () => {
+    tunePreviewResolution()
     syncControlsFromPreview()
     setButtonsEnabled(true)
   }, { once: true })
@@ -264,7 +342,10 @@ for (const input of [els.yaw, els.pitch]) {
   })
 }
 
-els.fov.addEventListener('input', updateLabels)
+els.fov.addEventListener('input', () => {
+  updateLabels()
+  updateOutputSizeInfo()
+})
 els.presetMode.addEventListener('change', updatePresetDescription)
 els.captureCurrent.addEventListener('click', captureCurrent)
 els.capturePreset.addEventListener('click', capturePresets)
@@ -278,6 +359,8 @@ els.imagePreview.addEventListener('click', (event) => {
     closeImagePreview()
   }
 })
+window.addEventListener('resize', tunePreviewResolution)
 
 updateLabels()
 updatePresetDescription()
+updateOutputSizeInfo()
