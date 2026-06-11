@@ -391,7 +391,7 @@ function openImagePreview({ url, filename }) {
 
 ## 注意事项
 
-1. 上传图片建议使用 2:1 比例(https://panoramagenerator.com/zh/blog/equirectangular-image-explained)的 equirectangular 全景图，例如 `6000x3000`。
+1. 上传图片建议使用 2:1 比例的 [equirectangular](https://panoramagenerator.com/zh/blog/equirectangular-image-explained) 全景图，例如 `6000x3000`。
 2. 如果用远程图片裁切，需要远程图片允许 CORS，否则 canvas 导出会失败。
 3. 当前 demo 使用本地上传图片生成 blob URL，因此不会触发跨域污染。
 4. 输出尺寸根据原图垂直像素密度和 `fov` 自动计算，不提供手动宽高输入。
